@@ -31,17 +31,13 @@ const Task = ({
 }:
   {
     task: Task
-    onChangeTask: (e: TextEditEvent, id: string) => void,
-    onClickAddSubTask: (id: string) => void,
-    onClickDeleteTask: (id: string) => void,
+    onChangeTask: (e: TextEditEvent, id: string, type: string) => void,
+    onClickAddSubTask: (id: string, type: string) => void,
+    onClickDeleteTask: (id: string, type: string) => void,
 
   }) => {
 
-  const [isMenuOpen, setIsMenuOpen] = useSyncedState('isMenuOpen', false)
 
-  // const handleClickThreeDot = () => {
-  //   setIsMenuOpen(!isMenuOpen)
-  // }
 
   return (
     <AutoLayout
@@ -59,7 +55,7 @@ const Task = ({
         spacing={"auto"}
         width="fill-parent"
       >
-        <TaskId id={task.id} />
+        <TaskId id={task.id} type={task.type} />
         <AutoLayout
           direction="vertical"
           spacing={4}
@@ -74,8 +70,8 @@ const Task = ({
             verticalAlignItems="center"
             horizontalAlignItems="center"
           >
-            <Plus onClick={() => onClickAddSubTask(task.id)} type="small" />
-            <Minus onClick={() => { onClickDeleteTask(task.id) }
+            <Plus onClick={() => onClickAddSubTask(task.id, task.type)} type="small" />
+            <Minus onClick={() => { onClickDeleteTask(task.id, task.type) }
               //
             } type="small" />
           </AutoLayout>
@@ -86,7 +82,7 @@ const Task = ({
         width="fill-parent"
         placeholder="Description"
         value={task.description}
-        onTextEditEnd={(e) => onChangeTask(e, task.id)}
+        onTextEditEnd={(e) => onChangeTask(e, task.id, task.type)}
       />
     </AutoLayout>
   )

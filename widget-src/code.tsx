@@ -19,41 +19,42 @@ interface SubTaskProps {
   type: string;
   description: string;
 }
-function Widget() {
-  const [count, setCount] = useSyncedState('count', 0)
 
-  // const [curMenus, setCurMenus] = useSyncedState('curMenus', {
-  //   x: 0,
-  //   y: 0,
-  //   isOpen: false,
-  // })
+const TASK_TYPE = [{
+  option: 'Visible',
+  label: 'Visible',
+
+}, {
+  option: 'Hidden',
+  label: 'Hidden',
+
+}]
+
+function Widget() {
 
   const [pageInfo, setPageInfo] = useSyncedState('pageInfo', {
     title: '',
     description: '',
   })
 
-  const [taskType, setTaskType] = useSyncedState('taskType', ['Visible'])
+  const [taskType, setTaskType] = useSyncedState('taskType', TASK_TYPE)
 
+  const [curTaskType, setCurTaskType] = useSyncedState('curTaskType', taskType[0].option)
   const [tasks, setTasks] = useSyncedState<TaskProps[]>('tasks', [
     {
       id: '1',
-      type: taskType[0],
+      type: taskType[0].option,
       description: '',
       children: [],
     },
   ])
-
-
-
-
   useEffect(() => {
     figma.ui.onmessage = (message) => {
       console.log("message>>", message)
       if (message.type === 'add-task') {
         console.log(message.parentTask)
         const { parentTask } = message
-        onClickAddSubTask(parentTask.id)
+
 
       }
       figma.closePlugin()
@@ -64,31 +65,20 @@ function Widget() {
   usePropertyMenu(
     [
       {
-        itemType: 'action',
-        propertyName: 'reset',
-        tooltip: 'Reset',
+        itemType: 'dropdown',
+        propertyName: 'taskType',
+        tooltip: 'Task Type',
+        options: TASK_TYPE,
+        selectedOption: curTaskType,
       },
       {
         itemType: 'separator',
       },
-      {
-        itemType: 'action',
-        propertyName: 'toFive',
-        tooltip: 'Set to 5',
-      },
-      {
-        itemType: 'action',
-        propertyName: 'toTen',
-        tooltip: 'Set to 10',
-      },
+
     ],
     ({ propertyName, propertyValue }) => {
-      if (propertyName === "reset") {
-        setCount(0)
-      } else if (propertyName === "toFive") {
-        setCount(5)
-      } else if (propertyName === "toTen") {
-        setCount(10)
+      if (propertyName === "taskType") {
+        setCurTaskType(propertyValue || '')
       }
     },
   )
@@ -96,9 +86,9 @@ function Widget() {
     setPageInfo({ ...pageInfo, [property]: e.characters })
   }
 
-  const onChangeTask = (e: TextEditEvent, id: string) => {
+  const onChangeTask = (e: TextEditEvent, id: string, type: string) => {
     const newTasks = tasks.map((task) => {
-      if (task.id === id) {
+      if (task.id === id && task.type === type) {
         return { ...task, description: e.characters }
       }
       return task
@@ -123,21 +113,26 @@ function Widget() {
     setTasks(newTasks)
   }
   const onClickAddTask = (taskType: string) => {
+
+    const newId = tasks.filter((task) => task.type === taskType).length + 1
+
     setTasks(
       [
         ...tasks,
         {
-          id: (tasks.length + 1).toString(),
-          type: taskType,
+          id: newId.toString(),
+          type: curTaskType,
           description: '',
           children: []
         }
       ]
     )
   }
-  const onClickAddSubTask = (id: string) => {
+
+  const onClickAddSubTask = (id: string, type: string) => {
+
     const newTasks = tasks.map((task) => {
-      if (task.id === id) {
+      if (task.id === id && task.type === type) {
         return {
           ...task,
           children: [
@@ -155,11 +150,12 @@ function Widget() {
 
     setTasks(newTasks)
   }
-  const onClickDeleteTask = (id: string) => {
-    if (tasks.length === 1) {
+  const onClickDeleteTask = (id: string, type: string) => {
+    if (tasks.filter((task) => task.type === type).length === 1) {
       return
     }
-    const newTasks = tasks.filter((task) => task.id !== id)
+
+    const newTasks = tasks.filter(task => !(task.id === id && task.type === type))
     setTasks(newTasks)
   }
   const onClickDeleteSubTask = (parentId: string, subTaskId: string) => {
@@ -201,35 +197,58 @@ function Widget() {
         onTextEditEnd={(e) => onTextChange(e, "description")}
         placeholder="Page Description"
       />
+      <AutoLayout direction="horizontal" spacing={8} width="fill-parent">
+        {taskType.map((loopType) => {
 
+          if (tasks.filter(task => task.type === loopType.option).length === 0) {
+            return null
+          }
 
-      <AutoLayout direction="vertical" spacing={8} width="fill-parent">
-
-        {tasks?.map((task, index) => (
-          <>
-
-            <Task
-              key={task.id || index}
-              task={task}
-              onChangeTask={onChangeTask}
-              onClickAddSubTask={onClickAddSubTask}
-              onClickDeleteTask={onClickDeleteTask}
-            // onClickThreeDot={onClickThreeDot}
-            />
-            {task.children.length > 0 &&
-              task.children?.map((subTask, subIndex) => (
-                <SubTask
-                  key={subTask.id || subIndex}
-                  parentId={task.id}
-                  subTask={subTask}
-                  onChangeSubTask={onChangeSubTask}
-                  onClickDeleteSubTask={onClickDeleteSubTask}
-                />
-              ))}
-          </>
-        ))}
+          return (
+            <AutoLayout
+              direction="vertical"
+              spacing={8}
+              key={loopType.option}
+              width="fill-parent"
+            >
+              {tasks
+                .filter(taskItem => taskItem.type === loopType.option).length > 0 &&
+                tasks
+                  .filter(taskItem => taskItem.type === loopType.option)
+                  .map((task) => (
+                    <AutoLayout
+                      key={task.id + task.type}
+                      direction="vertical"
+                      spacing={8}
+                      width="fill-parent"
+                    >
+                      <Task
+                        key={task.id + task.type}
+                        task={task}
+                        onChangeTask={onChangeTask}
+                        onClickAddSubTask={onClickAddSubTask}
+                        onClickDeleteTask={onClickDeleteTask}
+                      />
+                      {task.children.length > 0 &&
+                        task.children?.map((subTask, subIndex) => (
+                          <SubTask
+                            key={subTask.id + subTask.type || subIndex}
+                            parentId={task.id}
+                            subTask={subTask}
+                            onChangeSubTask={onChangeSubTask}
+                            onClickDeleteSubTask={onClickDeleteSubTask}
+                          />
+                        ))}
+                    </AutoLayout>
+                  ))
+              }
+            </AutoLayout>
+          )
+        })}
       </AutoLayout>
-      <Plus onClick={() => onClickAddTask(taskType[0])} />
+
+
+      <Plus onClick={() => onClickAddTask(curTaskType)} />
 
 
     </AutoLayout>

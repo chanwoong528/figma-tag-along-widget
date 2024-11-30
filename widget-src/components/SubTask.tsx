@@ -52,7 +52,7 @@ const SubTask = ({
           spacing={"auto"}
           width="fill-parent"
         >
-          <TaskId id={subTask.id} />
+          <TaskId id={subTask.id} type={subTask.type} />
 
           <AutoLayout
             direction="vertical"
