@@ -41,6 +41,7 @@ const Task = ({
 
   return (
     <AutoLayout
+      name={`Task-${task.id}-${task.type}`}
       direction="vertical"
       spacing={8}
       padding={16}
@@ -49,13 +50,14 @@ const Task = ({
       strokeWidth={1}
       cornerRadius={8}
     >
-
       <AutoLayout
         direction="horizontal"
         spacing={"auto"}
         width="fill-parent"
       >
-        <TaskId id={task.id} type={task.type} />
+        <TaskId task={task}
+        // id={task.id} type={task.type}
+        />
         <AutoLayout
           direction="vertical"
           spacing={4}
