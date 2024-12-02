@@ -1,11 +1,11 @@
 import Minus from "../ui/svg/Minus";
 import Plus from "../ui/svg/Plus";
-import ThreeDot from "../ui/svg/ThreeDot";
-import TaskId from "../ui/TaskId";
-import MenuList from "./MenuList";
 
-const { widget } = figma
-const { useSyncedState, usePropertyMenu, AutoLayout, Text, SVG, Input } = widget
+import TaskId from "../ui/TaskId";
+
+const { widget } = figma;
+const { useSyncedState, usePropertyMenu, AutoLayout, Text, SVG, Input } =
+  widget;
 
 interface Task {
   id: string;
@@ -19,75 +19,70 @@ interface SubTask {
   description: string;
 }
 
-
-
-
-
 const Task = ({
   task,
   onChangeTask,
   onClickAddSubTask,
   onClickDeleteTask,
-}:
-  {
-    task: Task
-    onChangeTask: (e: TextEditEvent, id: string, type: string) => void,
-    onClickAddSubTask: (id: string, type: string) => void,
-    onClickDeleteTask: (id: string, type: string) => void,
-
-  }) => {
-
-
-
+}: {
+  task: Task;
+  onChangeTask: (e: TextEditEvent, id: string, type: string) => void;
+  onClickAddSubTask: (id: string, type: string) => void;
+  onClickDeleteTask: (id: string, type: string) => void;
+}) => {
   return (
     <AutoLayout
       name={`Task-${task.id}-${task.type}`}
-      direction="vertical"
+      direction='vertical'
       spacing={8}
       padding={16}
-      width="fill-parent"
+      width='fill-parent'
       stroke={"#000000"}
       strokeWidth={1}
-      cornerRadius={8}
-    >
-      <AutoLayout
-        direction="horizontal"
-        spacing={"auto"}
-        width="fill-parent"
-      >
-        <TaskId task={task}
-        // id={task.id} type={task.type}
+      cornerRadius={8}>
+      <AutoLayout direction='horizontal' spacing={"auto"} width='fill-parent'>
+        <TaskId
+          task={task}
+          // id={task.id} type={task.type}
         />
         <AutoLayout
-          direction="vertical"
+          direction='vertical'
           spacing={4}
-          verticalAlignItems="center"
-          horizontalAlignItems="center"
-        >
-
-          <Text fontSize={12} fill={"#808080"}>{task.type}</Text>
+          verticalAlignItems='center'
+          horizontalAlignItems='center'>
+          <Text fontSize={12} fill={"#808080"}>
+            {task.type}
+          </Text>
           <AutoLayout
-            direction="horizontal"
+            direction='horizontal'
             spacing={2}
-            verticalAlignItems="center"
-            horizontalAlignItems="center"
-          >
-            <Plus onClick={() => onClickAddSubTask(task.id, task.type)} type="small" />
-            <Minus onClick={() => { onClickDeleteTask(task.id, task.type) }
-              //
-            } type="small" />
+            verticalAlignItems='center'
+            horizontalAlignItems='center'>
+            <Plus
+              onClick={() => onClickAddSubTask(task.id, task.type)}
+              type='small'
+            />
+            <Minus
+              onClick={
+                () => {
+                  onClickDeleteTask(task.id, task.type);
+                }
+                //
+              }
+              type='small'
+            />
           </AutoLayout>
         </AutoLayout>
       </AutoLayout>
 
       <Input
-        width="fill-parent"
-        placeholder="Description"
+        width='fill-parent'
+        placeholder='Description'
         value={task.description}
         onTextEditEnd={(e) => onChangeTask(e, task.id, task.type)}
       />
     </AutoLayout>
-  )
-}
+  );
+};
 
-export default Task
+export default Task;
