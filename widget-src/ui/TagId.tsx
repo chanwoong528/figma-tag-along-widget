@@ -11,26 +11,6 @@ export const TagId = ({
 }: {
   pointerInfo: { id: string; type: string; x: number; y: number };
 }) => {
-  usePropertyMenu(
-    [
-      {
-        itemType: "action",
-        propertyName: "show-task",
-        tooltip: "Task Type",
-      },
-    ],
-    (property) => {
-      if (property.propertyName === "show-task") {
-        // const targetTask = tasks.find(task => task.id === pointerInfo.id && task.type === pointerInfo.type)
-        // if (targetTask) {
-        //   console.log(getTaskStore())
-        //   // console.log("targetTask>> ", targetTask)
-        // }
-      }
-      console.log(property);
-    },
-  );
-
   return (
     <AutoLayout
       name={`TagId-${pointerInfo.id}-${pointerInfo.type}`}

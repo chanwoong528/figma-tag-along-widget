@@ -31,6 +31,8 @@ const TaskId = ({ task }: { task: { id: string; type: string } }) => {
         y: event.canvasY,
       },
     });
+
+    console.log(clonedWidget.id);
     clonedWidget.name = tagId;
     widgetNode.parent?.appendChild(clonedWidget);
   };

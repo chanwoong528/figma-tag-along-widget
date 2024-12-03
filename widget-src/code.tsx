@@ -17,6 +17,7 @@ const {
   SVG,
   Input,
   useEffect,
+  useWidgetNodeId,
 } = widget;
 import { TaskProps } from "./type";
 
@@ -53,6 +54,10 @@ function Widget() {
     "responsiveWidth",
     450,
   );
+  const widgetId = useWidgetNodeId();
+  const [pointerList, setPointerList] = useSyncedState<
+    { id: string; type: string }[]
+  >("pointerList", []);
 
   useEffect(() => {
     figma.ui.onmessage = (message) => {
@@ -199,6 +204,25 @@ function Widget() {
   };
 
   if (widgetMode === "pointer") {
+    usePropertyMenu(
+      [
+        {
+          itemType: "action",
+          propertyName: "show-task",
+          tooltip: "Task Type",
+        },
+      ],
+      async (property) => {
+        if (property.propertyName === "show-task") {
+          const widgetNode = (await figma.getNodeByIdAsync(
+            widgetId,
+          )) as WidgetNode;
+          console.log(">>>>>>>>>>>>>>> ", widgetNode);
+        }
+        console.log(property);
+      },
+    );
+
     return <TagId pointerInfo={pointerInfo} />;
   } else {
     usePropertyMenu(
@@ -244,8 +268,10 @@ function Widget() {
           value={pageInfo.title}
           onTextEditEnd={(e) => onTextChange(e, "title")}
           placeholder='Page Title'
+          width='fill-parent'
         />
         <Input
+          width='fill-parent'
           value={pageInfo.description}
           onTextEditEnd={(e) => onTextChange(e, "description")}
           placeholder='Page Description'
