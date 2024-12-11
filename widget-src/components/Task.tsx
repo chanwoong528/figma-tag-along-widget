@@ -1,3 +1,4 @@
+import { TaskProps } from "../type";
 import Minus from "../ui/svg/Minus";
 import Plus from "../ui/svg/Plus";
 
@@ -20,15 +21,19 @@ interface SubTask {
 }
 
 const Task = ({
+  index,
   task,
   onChangeTask,
   onClickAddSubTask,
   onClickDeleteTask,
+  onEditTask,
 }: {
+  index: string;
   task: Task;
   onChangeTask: (e: TextEditEvent, id: string, type: string) => void;
   onClickAddSubTask: (id: string, type: string) => void;
   onClickDeleteTask: (id: string, type: string) => void;
+  onEditTask: (id: string, key: keyof TaskProps, value: string) => void;
 }) => {
   return (
     <AutoLayout
@@ -42,8 +47,10 @@ const Task = ({
       cornerRadius={8}>
       <AutoLayout direction='horizontal' spacing={"auto"} width='fill-parent'>
         <TaskId
+          index={index}
           task={task}
-          // id={task.id} type={task.type}
+          onEditTask={onEditTask}
+        // id={task.id} type={task.type}
         />
         <AutoLayout
           direction='vertical'

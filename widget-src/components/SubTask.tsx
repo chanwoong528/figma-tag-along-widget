@@ -1,3 +1,4 @@
+import { TaskProps } from "../type";
 import Minus from "../ui/svg/Minus";
 import Plus from "../ui/svg/Plus";
 import TaskId from "../ui/TaskId";
@@ -15,20 +16,30 @@ interface SubTask {
 const SubTask = ({
   parentId,
   subTask,
+  orderIdx,
   onChangeSubTask,
   onClickDeleteSubTask,
+  onEditTask,
 }: {
   parentId: string;
   subTask: SubTask;
+  orderIdx: string;
   onChangeSubTask: (
     e: TextEditEvent,
     parentId: string,
     subTaskId: string,
+    type: string,
   ) => void;
   onClickDeleteSubTask: (
     parentId: string,
     subTaskId: string,
     type: string,
+  ) => void;
+  onEditTask: (
+    id: string,
+    key: keyof TaskProps,
+    value: string,
+    parentId?: string,
   ) => void;
 }) => {
   return (
@@ -43,7 +54,10 @@ const SubTask = ({
         cornerRadius={8}
         x={16}>
         <AutoLayout direction='horizontal' spacing={"auto"} width='fill-parent'>
-          <TaskId task={{ id: subTask.id, type: subTask.type }} />
+          <TaskId task={subTask}
+            index={orderIdx}
+            onEditTask={onEditTask}
+          />
 
           <AutoLayout
             direction='vertical'
@@ -69,7 +83,7 @@ const SubTask = ({
         <Input
           placeholder='Description'
           value={subTask.description}
-          onTextEditEnd={(e) => onChangeSubTask(e, parentId, subTask.id)}
+          onTextEditEnd={(e) => onChangeSubTask(e, parentId, subTask.id, subTask.type)}
           width='fill-parent'
         />
       </AutoLayout>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<style>
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header h2 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    width: 30px;
+    font-size: 12px;
+
+    white-space: nowrap;
+    height: 30px;
+    color: #fff;
+  }
+
+  .description {
+    display: flex;
+    background-color: #ccc;
+    padding: 10px;
+    border-radius: 10px;
+  }
+</style>
+
+<body>
+  <section>
+    <header class="header">
+      <h2 id="order">order</h2>
+      <p id="type">type</p>
+    </header>
+    <div class="description">
+      <p id="description">description</p>
+    </div>
+  </section>
+</body>
+
+</html>
+<script>
+
+  window.onmessage = (event) => {
+
+    const COLOR_TYPE = {
+      "Visible": "#2D7FF9",
+      "Hidden": "#808080",
+    }
+
+
+    const viewData = event.data.pluginMessage;
+    const { id, type, description, orderIdx } = viewData;
+    document.getElementById("order").innerText = orderIdx;
+    document.getElementById("order").style.backgroundColor = COLOR_TYPE[type];
+    document.getElementById("type").innerText = type;
+    document.getElementById("description").innerText = description;
+
+
+  }
+</script>

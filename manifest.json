@@ -10,6 +10,9 @@
     "figma",
     "figjam"
   ],
+  "ui": {
+    "tagModal": "./ui/tagModal.html"
+  },
   "containsWidget": true,
   "widgetApi": "1.0.0",
   "networkAccess": {

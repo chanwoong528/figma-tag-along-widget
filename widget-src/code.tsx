@@ -14,10 +14,9 @@ const {
   usePropertyMenu,
   AutoLayout,
   Text,
-  SVG,
   Input,
   useEffect,
-  useWidgetNodeId,
+
 } = widget;
 import { TaskProps } from "./type";
 
@@ -28,6 +27,9 @@ function Widget() {
     y: 0,
     id: "",
     type: "",
+    description: "",
+    orderIdx: "",
+
   });
 
   const [pageInfo, setPageInfo] = useSyncedState("pageInfo", {
@@ -48,16 +50,13 @@ function Widget() {
       description: "",
       done: false,
       children: [],
+      pointerId: "",
     },
   ]);
   const [responsiveWidth, setResponsiveWidth] = useSyncedState(
     "responsiveWidth",
     450,
   );
-  const widgetId = useWidgetNodeId();
-  const [pointerList, setPointerList] = useSyncedState<
-    { id: string; type: string }[]
-  >("pointerList", []);
 
   useEffect(() => {
     figma.ui.onmessage = (message) => {
@@ -71,7 +70,9 @@ function Widget() {
   });
 
   const onTextChange = (e: TextEditEvent, property: string) => {
+    console.log("onTextChange>> ", e.characters);
     setPageInfo({ ...pageInfo, [property]: e.characters });
+
   };
 
   const calculateResponsiveWidth = (targetTasks: TaskProps[]) => {
@@ -96,12 +97,31 @@ function Widget() {
       return task;
     });
 
+    const curPointerNode = tasks.filter((task) => !!task.pointerId);
+    curPointerNode.forEach(async (node, index) => {
+      const targetIdx = newTasks.filter((task) => task.type === type).findIndex((task) => task.id === node.id);
+      const widgetNode = (await figma.getNodeByIdAsync(node.pointerId)) as WidgetNode | null;
+      if (widgetNode) {
+        widgetNode.setWidgetSyncedState({
+          widgetMode: "pointer",
+          pointerInfo: {
+            ...node,
+            id: node.id,
+            type: type,
+            description: e.characters,
+            orderIdx: (targetIdx + 1).toString(),
+          }
+        });
+      }
+    });
+
     setTasks(newTasks);
   };
   const onChangeSubTask = (
     e: TextEditEvent,
     parentId: string,
     subTaskId: string,
+    type: string,
   ) => {
     const newTasks = tasks.map((task) => {
       if (task.id === parentId) {
@@ -117,6 +137,23 @@ function Widget() {
       }
       return task;
     });
+    const targetTask = newTasks.find(task => task.id === parentId);
+
+    const parentIdx = newTasks.filter(item => item.type === type).findIndex((task) => task.id === parentId);
+    if (targetTask) {
+      const curPointerNode = targetTask.children.filter(subTask => !!subTask.pointerId);
+      const targetIdx = targetTask.children.findIndex((subTask) => subTask.id === subTaskId);
+      curPointerNode.forEach(async (node, idx) => {
+        const widgetNode = (await figma.getNodeByIdAsync(node.pointerId)) as WidgetNode | null;
+        if (widgetNode) {
+          widgetNode.setWidgetSyncedState({
+            widgetMode: "pointer",
+            pointerInfo: { ...node, description: e.characters, orderIdx: `${parentIdx + 1}-${targetIdx + 1}` },
+          });
+        }
+      });
+    }
+
 
     setTasks(newTasks);
   };
@@ -136,6 +173,7 @@ function Widget() {
         description: "",
         done: false,
         children: [],
+        pointerId: "",
       },
     ];
 
@@ -144,7 +182,6 @@ function Widget() {
   };
 
   const onClickAddSubTask = (id: string, type: string) => {
-    console.log("onClickAddSubTask>> ", id, type);
     const newTasks = tasks.map((task) => {
       if (task.id === id && task.type === type) {
         const lastId =
@@ -161,8 +198,10 @@ function Widget() {
               type: task.type,
               description: "",
               done: false,
+              pointerId: "",
             },
           ],
+
         };
       }
       return task;
@@ -171,20 +210,79 @@ function Widget() {
     setTasks(newTasks);
   };
 
-  const onClickDeleteTask = (id: string, type: string) => {
+  const onEditTask = (id: string, key: keyof TaskProps, value: string, parentId?: string) => {
+    if (parentId) {
+      return onEditSubTask(id, key, value, parentId);
+    }
+    const newTasks = tasks.map((task) => {
+      if (task.id.toString() === id.toString()) {
+        return { ...task, [key]: value };
+      }
+      return task;
+    });
+    setTasks(newTasks);
+  };
+
+  const onEditSubTask = (id: string, key: keyof TaskProps, value: string, parentId: string,) => {
+    const newTasks = tasks.map((task) => {
+      if (task.id.toString() === parentId.toString()) {
+        return {
+          ...task, children: task.children.map((subTask) => {
+            if (subTask.id.toString() === id.toString()) {
+              return { ...subTask, [key]: value };
+            }
+            return subTask;
+          })
+        };
+      }
+      return task;
+    });
+    setTasks(newTasks);
+  }
+
+
+  const onClickDeleteTask = async (id: string, type: string) => {
     if (tasks.filter((task) => task.type === type).length === 0) {
       console.log("no task");
       return;
     }
 
+    const tobeDeleteTask = tasks.find((task) => task.id === id && task.type === type);
+    if (!!tobeDeleteTask?.pointerId) {
+      const widgetNode = (await figma.getNodeByIdAsync(tobeDeleteTask.pointerId)) as WidgetNode | null;
+      if (widgetNode) {
+        widgetNode.remove();
+      }
+    }
     const newTasks = tasks.filter(
       (task) => !(task.id === id && task.type === type),
     );
 
+
     setResponsiveWidth(calculateResponsiveWidth(newTasks));
     setTasks(newTasks);
+
+    const curPointerNode = newTasks.filter((task) => !!task.pointerId);
+
+    curPointerNode.forEach(async (node, index) => {
+      const widgetNode = (await figma.getNodeByIdAsync(node.pointerId)) as WidgetNode | null;
+      const targetIdx = newTasks.findIndex((task) => task.id === node.id);
+
+      if (widgetNode) {
+        console.log("widgetNode>> ", widgetNode);
+        widgetNode.setWidgetSyncedState({
+          widgetMode: "pointer",
+          pointerInfo: {
+            ...node,
+            id: node.id,
+            type: node.type,
+            orderIdx: (targetIdx + 1).toString(),
+          }
+        });
+      }
+    });
   };
-  const onClickDeleteSubTask = (
+  const onClickDeleteSubTask = async (
     parentId: string,
     subTaskId: string,
     type: string,
@@ -198,9 +296,39 @@ function Widget() {
       }
       return task;
     });
-    setResponsiveWidth(calculateResponsiveWidth(newTasks));
 
+    setResponsiveWidth(calculateResponsiveWidth(newTasks));
     setTasks(newTasks);
+
+    const targetTask = tasks.find(task => task.id === parentId);
+    const tobeDeleteSubTask = targetTask?.children.find(subTask => subTask.id === subTaskId);
+
+
+
+    if (tobeDeleteSubTask) {
+      const widgetNode = (await figma.getNodeByIdAsync(tobeDeleteSubTask.pointerId)) as WidgetNode | null;
+      if (widgetNode) {
+        widgetNode.remove();
+      }
+    }
+
+    if (targetTask) {
+      const curPointerNode = targetTask.children.filter(subTask => !!subTask.pointerId);
+      const parentIdx = newTasks.filter(item => item.type === type).findIndex((task) => task.id === parentId);
+
+
+      curPointerNode.forEach(async (node) => {
+        const targetIdx = newTasks.find((task) => task.id === parentId)?.children.findIndex((subTask) => subTask.id === node.id) || 0;
+        console.log("targetIdx>> ", targetIdx);
+        const widgetNode = (await figma.getNodeByIdAsync(node.pointerId)) as WidgetNode | null;
+        if (widgetNode) {
+          widgetNode.setWidgetSyncedState({
+            widgetMode: "pointer",
+            pointerInfo: { ...node, orderIdx: `${parentIdx + 1}-${targetIdx + 1}` },
+          });
+        }
+      });
+    }
   };
 
   if (widgetMode === "pointer") {
@@ -214,12 +342,20 @@ function Widget() {
       ],
       async (property) => {
         if (property.propertyName === "show-task") {
-          const widgetNode = (await figma.getNodeByIdAsync(
-            widgetId,
-          )) as WidgetNode;
-          console.log(">>>>>>>>>>>>>>> ", widgetNode);
+          return new Promise((resolve) => {
+            figma.showUI(__uiFiles__.tagModal, { width: 450, height: 600 });
+
+            console.log(pointerInfo)
+            figma.ui.postMessage({
+              id: pointerInfo.id,
+              type: pointerInfo.type,
+              description: pointerInfo.description,
+              orderIdx: pointerInfo.orderIdx,
+            });
+
+          })
         }
-        console.log(property);
+
       },
     );
 
@@ -296,27 +432,31 @@ function Widget() {
                     !!tasks &&
                     tasks
                       .filter((taskItem) => taskItem.type === loopType.option)
-                      .map((task) => (
+                      .map((task, index) => (
                         <AutoLayout
                           key={task.id + task.type}
                           direction='vertical'
                           spacing={8}
                           width='fill-parent'>
                           <Task
+                            index={(index + 1).toString()}
                             key={task.id + task.type}
                             task={task}
                             onChangeTask={onChangeTask}
                             onClickAddSubTask={onClickAddSubTask}
                             onClickDeleteTask={onClickDeleteTask}
+                            onEditTask={onEditTask}
                           />
                           {task.children.length > 0 &&
                             task.children.map((subTask, subIndex) => (
                               <SubTask
                                 key={subTask.id + subTask.type || subIndex}
+                                orderIdx={`${index + 1}-${subIndex + 1}`}
                                 parentId={task.id}
                                 subTask={subTask}
                                 onChangeSubTask={onChangeSubTask}
                                 onClickDeleteSubTask={onClickDeleteSubTask}
+                                onEditTask={onEditTask}
                               />
                             ))}
                         </AutoLayout>
