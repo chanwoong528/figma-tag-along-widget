@@ -4,13 +4,17 @@
     "jsxFactory": "figma.widget.h",
     "jsxFragmentFactory": "figma.widget.Fragment",
     "target": "es2016",
-    "lib": [
-      "es2016"
-    ],
+    "lib": ["es2016"],
     "strict": true,
+
     "typeRoots": [
       "../node_modules/@types",
-      "../node_modules/@figma"
-    ]
-  }
+      "../node_modules/@figma",
+      "../node_modules/json-as-xlsx"
+    ],
+    "outDir": "../dist",
+    "moduleResolution": "node",
+    "allowJs": true
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
 }

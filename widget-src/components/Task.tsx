@@ -5,8 +5,7 @@ import Plus from "../ui/svg/Plus";
 import TaskId from "../ui/TaskId";
 
 const { widget } = figma;
-const { useSyncedState, usePropertyMenu, AutoLayout, Text, SVG, Input } =
-  widget;
+const { AutoLayout, Text, Input } = widget;
 
 interface Task {
   id: string;
@@ -50,7 +49,7 @@ const Task = ({
           index={index}
           task={task}
           onEditTask={onEditTask}
-        // id={task.id} type={task.type}
+          // id={task.id} type={task.type}
         />
         <AutoLayout
           direction='vertical'

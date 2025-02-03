@@ -11,13 +11,14 @@
     "figjam"
   ],
   "ui": {
-    "tagModal": "./ui/tagModal.html"
+    "tagModal": "./ui/tagModal.html",
+    "excelDownload": "./ui/excelDownload.html"
   },
   "containsWidget": true,
   "widgetApi": "1.0.0",
   "networkAccess": {
     "allowedDomains": [
-      "none"
+      "https://cdnjs.cloudflare.com"
     ]
   }
 }

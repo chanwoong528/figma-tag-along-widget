@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.14.3/xlsx.full.min.js"></script>
+
+  <style>
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h2 {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      width: 30px;
+      font-size: 12px;
+
+      white-space: nowrap;
+      height: 30px;
+      color: #fff;
+    }
+
+    .description {
+      display: flex;
+      background-color: #ccc;
+      padding: 10px;
+      border-radius: 10px;
+    }
+  </style>
+
+  <body>
+    <section>
+      <h1>download</h1>
+      <button id="exportWS">DOWNLOAD</button>
+    </section>
+
+    <script>
+      window.onmessage = (event) => {
+        const COLOR_TYPE = {
+          Visible: "#2D7FF9",
+          Hidden: "#808080",
+        };
+
+        const viewData = event.data.pluginMessage;
+        const { tasks, title } = viewData;
+
+        function exportWS() {
+          try {
+            let myFile = !!title
+              ? `${title}.xlsx`
+              : "hk-description-panel-untitled.xlsx";
+            const myWorkSheet = XLSX.utils.json_to_sheet(tasks);
+
+            const myWorkBook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(
+              myWorkBook,
+              myWorkSheet,
+              "myWorkSheet",
+            );
+            const file = XLSX.writeFile(myWorkBook, myFile);
+            return true;
+          } catch (error) {
+            console.log("Excel 다운로드 중 오류 발생", error);
+            return false;
+          }
+        }
+
+        const isSuccess = exportWS();
+        console.log("isSuccess>>", isSuccess);
+
+        if (!!isSuccess) {
+          parent.postMessage({ pluginMessage: "close" }, "*");
+        }
+        const btn = document.getElementById("exportWS");
+        btn.addEventListener("click", () => {
+          exportWS();
+        });
+      };
+      // document
+      //   .getElementById("exportWSPlus")
+      //   .addEventListener("click", exportWSPlus);
+    </script>
+  </body>
+</html>

@@ -8,10 +8,13 @@ import { TagId } from "./ui/TagId";
 
 import { TASK_TYPES } from "../common/constant";
 
+import * as XLSX from "xlsx";
+
 const { widget } = figma;
 const { useSyncedState, usePropertyMenu, AutoLayout, Text, Input, useEffect } =
   widget;
 import { TaskProps } from "./type";
+import Excel from "./ui/svg/Excel";
 
 function Widget() {
   const [widgetMode] = useSyncedState("widgetMode", "list");
@@ -29,7 +32,7 @@ function Widget() {
     description: "",
   });
 
-  const [taskType, setTaskType] = useSyncedState("taskType", TASK_TYPES);
+  const [taskType] = useSyncedState("taskType", TASK_TYPES);
   const [curTaskType, setCurTaskType] = useSyncedState(
     "curTaskType",
     TASK_TYPES[0].option,
@@ -55,11 +58,63 @@ function Widget() {
       console.log("message>>", message);
       if (message.type === "add-task") {
         console.log(message.parentTask);
-        const { parentTask } = message;
+        // const { parentTask } = message;
       }
-      figma.closePlugin();
+      if (message.type === "close") {
+        figma.ui.hide();
+      }
     };
   });
+
+  const onClickExcel = () => {
+    try {
+      console.log("Excel 기능 준비 중");
+
+      // 데이터 변환 함수
+      const flattenTasks = (tasks: TaskProps[]) => {
+        const result: any[] = [];
+
+        tasks.forEach((task) => {
+          // 부모 태스크 추가
+          result.push({
+            id: task.id,
+            type: task.type,
+            description: task.description,
+            status: task.done ? "Done" : "In Progress",
+            level: "Parent",
+            parentId: "-",
+          });
+
+          // 자식 태스크들 추가
+          task.children?.forEach((child) => {
+            result.push({
+              id: child.id,
+              type: child.type,
+              description: child.description,
+              status: child.done ? "Done" : "In Progress",
+              level: "Child",
+              parentId: task.id,
+            });
+          });
+        });
+
+        return result;
+      };
+
+      const flattenedData = flattenTasks(tasks);
+
+      return new Promise((resolve) => {
+        figma.showUI(__uiFiles__.excelDownload, { width: 450, height: 600 });
+        figma.ui.postMessage({
+          type: "download",
+          title: pageInfo.title,
+          tasks: flattenedData,
+        });
+      });
+    } catch (error) {
+      console.log("Excel 기능 준비 중 오류 발생", error);
+    }
+  };
 
   const onTextChange = (e: TextEditEvent, property: string) => {
     console.log("onTextChange>> ", e.characters);
@@ -90,7 +145,7 @@ function Widget() {
 
     const curPointerNode = tasks.filter((task) => !!task.pointerId);
 
-    curPointerNode.forEach(async (node, index) => {
+    curPointerNode.forEach(async (node, _) => {
       const targetIdx = newTasks
         .filter((task) => task.type === type)
         .findIndex((task) => task.id === id);
@@ -143,13 +198,6 @@ function Widget() {
       .findIndex((task) => task.id === parentId);
 
     if (targetTask) {
-      const curPointerNode = targetTask.children.filter(
-        (subTask) => !!subTask.pointerId,
-      );
-      const widgetNodeId = newTasks[parentIdx].children.find(
-        (sub) => sub.id === subTaskId,
-      )?.pointerId;
-
       targetTask.children.forEach(async (subTask, idx) => {
         if (subTask.id === subTaskId && !!subTask.pointerId) {
           const widgetNode = (await figma.getNodeByIdAsync(
@@ -274,7 +322,7 @@ function Widget() {
     const tobeDeleteTask = tasks.find(
       (task) => task.id === id && task.type === type,
     );
-    if (!!tobeDeleteTask?.pointerId) {
+    if (tobeDeleteTask?.pointerId) {
       const widgetNode = (await figma.getNodeByIdAsync(
         tobeDeleteTask.pointerId,
       )) as WidgetNode | null;
@@ -291,7 +339,7 @@ function Widget() {
 
     const curPointerNode = newTasks.filter((task) => !!task.pointerId);
 
-    curPointerNode.forEach(async (node, index) => {
+    curPointerNode.forEach(async (node) => {
       const widgetNode = (await figma.getNodeByIdAsync(
         node.pointerId,
       )) as WidgetNode | null;
@@ -384,7 +432,7 @@ function Widget() {
       ],
       async (property) => {
         if (property.propertyName === "show-task") {
-          return new Promise((resolve) => {
+          return new Promise((_) => {
             figma.showUI(__uiFiles__.tagModal, { width: 450, height: 600 });
 
             console.log(pointerInfo);
@@ -452,6 +500,7 @@ function Widget() {
           onTextEditEnd={(e) => onTextChange(e, "description")}
           placeholder='Page Description'
         />
+
         {!!tasks && tasks.length > 0 ? (
           <AutoLayout direction='horizontal' spacing={8} width='fill-parent'>
             {taskType?.map((loopType) => {
@@ -508,8 +557,10 @@ function Widget() {
         ) : (
           <Text>No Task</Text>
         )}
-
-        <Plus onClick={() => onClickAddTask(curTaskType)} />
+        <AutoLayout direction='horizontal' spacing='auto' width='fill-parent'>
+          <Plus onClick={() => onClickAddTask(curTaskType)} />
+          <Excel onClick={onClickExcel} type='large' />
+        </AutoLayout>
       </AutoLayout>
     );
   }
