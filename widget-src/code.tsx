@@ -117,7 +117,6 @@ function Widget() {
   };
 
   const onTextChange = (e: TextEditEvent, property: string) => {
-    console.log("onTextChange>> ", e.characters);
     setPageInfo({ ...pageInfo, [property]: e.characters });
   };
 
@@ -135,7 +134,7 @@ function Widget() {
     return width;
   };
 
-  const onChangeTask = (e: TextEditEvent, id: string, type: string) => {
+  const onChangeTask = async (e: TextEditEvent, id: string, type: string) => {
     const newTasks = tasks.map((task) => {
       if (task.id === id && task.type === type) {
         return { ...task, description: e.characters };
@@ -143,33 +142,30 @@ function Widget() {
       return task;
     });
 
-    const curPointerNode = tasks.filter((task) => !!task.pointerId);
-
-    curPointerNode.forEach(async (node, _) => {
-      const targetIdx = newTasks
-        .filter((task) => task.type === type)
-        .findIndex((task) => task.id === id);
-
-      const widgetNodeId = newTasks[targetIdx].pointerId;
-
-      const widgetNode = (await figma.getNodeByIdAsync(
-        widgetNodeId,
-      )) as WidgetNode | null;
-      if (widgetNode) {
-        widgetNode.setWidgetSyncedState({
-          widgetMode: "pointer",
-          pointerInfo: {
-            ...node,
-            id: node.id,
-            type: type,
-            description: e.characters,
-            orderIdx: (targetIdx + 1).toString(),
-          },
-        });
-      }
-    });
-
     setTasks(newTasks);
+
+    const changedTasks = newTasks.filter(
+      (task) => task.id === id && task.type === type,
+    );
+    const changedTaskPointerId = changedTasks[0].pointerId;
+    const changedTaskOrderIdx =
+      newTasks
+        .filter((task) => task.type === type)
+        .findIndex((task) => task.id === id) + 1;
+
+    const changedWidget = (await figma.getNodeByIdAsync(
+      changedTaskPointerId,
+    )) as WidgetNode | null;
+    if (changedWidget) {
+      changedWidget.setWidgetSyncedState({
+        widgetMode: "pointer",
+        pointerInfo: {
+          ...changedTasks[0],
+          description: e.characters,
+          orderIdx: changedTaskOrderIdx.toString(),
+        },
+      });
+    }
   };
   const onChangeSubTask = (
     e: TextEditEvent,
@@ -274,15 +270,17 @@ function Widget() {
 
   const onEditTask = (
     id: string,
+    type: string,
     key: keyof TaskProps,
     value: string,
     parentId?: string,
   ) => {
     if (parentId) {
-      return onEditSubTask(id, key, value, parentId);
+      return onEditSubTask(id, type, key, value, parentId);
     }
+
     const newTasks = tasks.map((task) => {
-      if (task.id.toString() === id.toString()) {
+      if (task.id.toString() === id.toString() && task.type === type) {
         return { ...task, [key]: value };
       }
       return task;
@@ -292,16 +290,20 @@ function Widget() {
 
   const onEditSubTask = (
     id: string,
+    type: string,
     key: keyof TaskProps,
     value: string,
     parentId: string,
   ) => {
     const newTasks = tasks.map((task) => {
-      if (task.id.toString() === parentId.toString()) {
+      if (task.id.toString() === parentId.toString() && task.type === type) {
         return {
           ...task,
           children: task.children.map((subTask) => {
-            if (subTask.id.toString() === id.toString()) {
+            if (
+              subTask.id.toString() === id.toString() &&
+              subTask.type === type
+            ) {
               return { ...subTask, [key]: value };
             }
             return subTask;
@@ -343,19 +345,21 @@ function Widget() {
       const widgetNode = (await figma.getNodeByIdAsync(
         node.pointerId,
       )) as WidgetNode | null;
-      const targetIdx = newTasks.findIndex((task) => task.id === node.id);
-
-      if (widgetNode) {
-        console.log("widgetNode>> ", widgetNode);
-        widgetNode.setWidgetSyncedState({
-          widgetMode: "pointer",
-          pointerInfo: {
-            ...node,
-            id: node.id,
-            type: node.type,
-            orderIdx: (targetIdx + 1).toString(),
-          },
-        });
+      if (node.type === type) {
+        const targetIdx = newTasks
+          .filter((task) => task.type === type)
+          .findIndex((task) => task.id === node.id);
+        if (widgetNode) {
+          widgetNode.setWidgetSyncedState({
+            widgetMode: "pointer",
+            pointerInfo: {
+              ...node,
+              id: node.id,
+              type: node.type,
+              orderIdx: (targetIdx + 1).toString(),
+            },
+          });
+        }
       }
     });
   };

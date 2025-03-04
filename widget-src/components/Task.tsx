@@ -32,7 +32,13 @@ const Task = ({
   onChangeTask: (e: TextEditEvent, id: string, type: string) => void;
   onClickAddSubTask: (id: string, type: string) => void;
   onClickDeleteTask: (id: string, type: string) => void;
-  onEditTask: (id: string, key: keyof TaskProps, value: string) => void;
+  onEditTask: (
+    id: string,
+    type: string,
+    key: keyof TaskProps,
+    value: string,
+    parentId?: string,
+  ) => void;
 }) => {
   return (
     <AutoLayout
@@ -69,12 +75,7 @@ const Task = ({
               type='small'
             />
             <Minus
-              onClick={
-                () => {
-                  onClickDeleteTask(task.id, task.type);
-                }
-                //
-              }
+              onClick={() => onClickDeleteTask(task.id, task.type)}
               type='small'
             />
           </AutoLayout>

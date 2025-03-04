@@ -37,6 +37,7 @@ const SubTask = ({
   ) => void;
   onEditTask: (
     id: string,
+    type: string,
     key: keyof TaskProps,
     value: string,
     parentId?: string,
@@ -54,10 +55,7 @@ const SubTask = ({
         cornerRadius={8}
         x={16}>
         <AutoLayout direction='horizontal' spacing={"auto"} width='fill-parent'>
-          <TaskId task={subTask}
-            index={orderIdx}
-            onEditTask={onEditTask}
-          />
+          <TaskId task={subTask} index={orderIdx} onEditTask={onEditTask} />
 
           <AutoLayout
             direction='vertical'
@@ -83,7 +81,9 @@ const SubTask = ({
         <Input
           placeholder='Description'
           value={subTask.description}
-          onTextEditEnd={(e) => onChangeSubTask(e, parentId, subTask.id, subTask.type)}
+          onTextEditEnd={(e) =>
+            onChangeSubTask(e, parentId, subTask.id, subTask.type)
+          }
           width='fill-parent'
         />
       </AutoLayout>

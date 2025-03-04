@@ -4,10 +4,20 @@ const { SVG, useWidgetNodeId } = widget;
 import { TASK_TYPE } from "../../common/constant";
 import { TaskProps } from "../type";
 
-const TaskId = ({ task, onEditTask, index }: {
-  task: { id: string; type: string },
-  onEditTask: (id: string, keyStr: keyof TaskProps, value: string, parentId?: string) => void,
-  index: string
+const TaskId = ({
+  task,
+  onEditTask,
+  index,
+}: {
+  task: { id: string; type: string };
+  onEditTask: (
+    id: string,
+    type: string,
+    keyStr: keyof TaskProps,
+    value: string,
+    parentId?: string,
+  ) => void;
+  index: string;
 }) => {
   const widgetId = useWidgetNodeId();
 
@@ -38,14 +48,13 @@ const TaskId = ({ task, onEditTask, index }: {
       },
     });
 
-
     const isChild = task.id.split("-").length > 1;
 
     if (isChild) {
       const parentId = task.id.split("-")[0];
-      onEditTask(task.id, "pointerId", clonedWidget.id, parentId);
+      onEditTask(task.id, task.type, "pointerId", clonedWidget.id, parentId);
     } else {
-      onEditTask(task.id, "pointerId", clonedWidget.id);
+      onEditTask(task.id, task.type, "pointerId", clonedWidget.id);
     }
 
     clonedWidget.name = tagId;
@@ -55,9 +64,11 @@ const TaskId = ({ task, onEditTask, index }: {
   return (
     <SVG
       src={`<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 0L28 7.5V22.5L15 30L2 22.5V7.5L15 0Z" fill="${TASK_TYPE.find((taskType) => taskType.option === task.type)?.color
+        <path d="M15 0L28 7.5V22.5L15 30L2 22.5V7.5L15 0Z" fill="${
+          TASK_TYPE.find((taskType) => taskType.option === task.type)?.color
         }"/>
-        <text x="15" y="20" font-size="16" fill="white" text-anchor="middle">${index         // task.id
+        <text x="15" y="20" font-size="16" fill="white" text-anchor="middle">${
+          index // task.id
         }</text>
       </svg>`}
       onClick={handleClick}
